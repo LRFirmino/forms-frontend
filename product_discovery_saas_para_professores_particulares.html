@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pesquisa: Gestão e Pagamentos para Professores Particulares</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              200: '#bae0fd',
+              500: '#0284c7',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .step-content {
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .step-content.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Efeito visual para a pergunta pendente */
+    .field-error {
+      border: 2px solid #ef4444 !important;
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      background-color: #fef2f2;
+      animation: shake 0.3s ease-in-out;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20%,
+      60% {
+        transform: translateX(-4px);
+      }
+
+      40%,
+      80% {
+        transform: translateX(4px);
+      }
+    }
+
+    /* Responsive: mobile + desktop */
+    html, body { width:100%; max-width:100%; overflow-x:hidden; }
+    *, *::before, *::after { box-sizing:border-box; }
+    input, select, textarea, button { max-width:100%; }
+    @media (max-width: 767px) {
+      header > div:first-child { padding:.75rem .875rem; }
+      header .font-bold { font-size:.95rem; line-height:1.2; }
+      main { width:100%; max-width:100%; padding:.75rem .625rem 1.25rem; }
+      main > div { border-radius:1rem; padding:1rem; box-shadow:0 8px 24px rgba(15,23,42,.08); }
+      .step-content h1, .step-content h2 { font-size:1.2rem; line-height:1.35; }
+      .step-content > div:first-child { padding-bottom:.75rem; }
+      .question-block label span { overflow-wrap:anywhere; }
+      .grid.grid-cols-2, .grid.grid-cols-3, .grid.md\:grid-cols-2, .grid.md\:grid-cols-3 { grid-template-columns:minmax(0,1fr) !important; }
+      #block-p6-sub .grid.grid-cols-5 { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+      #block-p6-sub .grid.grid-cols-5 label:last-child { grid-column:1/-1; }
+      .ranking-item { gap:.5rem; align-items:center; }
+      .ranking-item > span:first-child { min-width:0; flex:1; line-height:1.35; }
+      .ranking-item > div { flex-shrink:0; }
+      .ranking-item button { min-width:2rem; min-height:2rem; display:inline-flex; align-items:center; justify-content:center; }
+      #btn-prev, #btn-next, #btn-submit { min-height:2.75rem; }
+      footer { padding:1rem .75rem; line-height:1.5; }
+    }
+    @media (max-width:380px) {
+      header .bg-slate-100 span { display:none; }
+      header .bg-slate-100 { padding:.5rem; }
+      main { padding-left:.4rem; padding-right:.4rem; }
+      main > div { padding:.8rem; }
+      .question-block { padding-left:0; padding-right:0; }
+    }
+  </style>
+</head>
+
+<body
+  class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+  <!-- CONFIGURAÇÃO DO BACKEND -->
+  <script>
+    const CONFIG = {
+      API_ENDPOINT: 'http://localhost:8080/api/v1/survey'
+    };
+  </script>
+
+  <!-- CABEÇALHO -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="bg-brand-600 text-white p-2 rounded-xl shadow-md shadow-brand-500/20">
+          <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+        </div>
+        <span class="font-bold text-slate-900 tracking-tight text-lg">Formulário de Pesquisa</span>
+      </div>
+      <div class="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+        <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+        <span>3 a 5 min</span>
+      </div>
+    </div>
+
+    <div class="w-full bg-slate-100 h-1.5 overflow-hidden">
+      <div id="progress-bar" class="bg-brand-600 h-full w-1/4 transition-all duration-500 ease-out"></div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="max-w-2xl mx-auto px-4 py-8 w-full flex-grow">
+
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-200/50 p-6 md:p-8">
+
+      <!-- Mensagem de Erro Global -->
+      <div id="error-message"
+        class="hidden mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl flex items-center gap-3">
+        <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0 text-red-500"></i>
+        <span id="error-text">Por favor, responda a pergunta destacada abaixo antes de avançar.</span>
+      </div>
+
+      <form id="discovery-form" onsubmit="return false;">
+
+        <!-- SEÇÃO 1 -->
+        <div id="step-1" class="step-content active space-y-6">
+          <div class="border-b border-slate-100 pb-4">
+            <span
+              class="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md">Etapa
+              1 de 4</span>
+            <h1 class="text-xl md:text-2xl font-bold text-slate-900 mt-2">Perfil e Atuação</h1>
+            <p class="text-slate-500 text-sm mt-1">Queremos entender um pouco sobre a sua rotina como professor.</p>
+          </div>
+
+          <!-- P1 -->
+          <div class="question-block space-y-3 p-1 transition-all rounded-xl" id="block-p1">
+            <label class="block font-semibold text-slate-800 text-sm">
+              1. Você dá aulas particulares atualmente? <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-1 gap-2.5">
+              <label
+                class="flex items-center p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="p1_aulas" value="Sim, exclusivamente"
+                  class="text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-3 text-sm font-medium text-slate-700">Sim, exclusivamente</span>
+              </label>
+              <label
+                class="flex items-center p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="p1_aulas" value="Sim, como atividade principal"
+                  class="text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-3 text-sm font-medium text-slate-700">Sim, como atividade principal</span>
+              </label>
+              <label
+                class="flex items-center p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="p1_aulas" value="Sim, como renda complementar"
+                  class="text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-3 text-sm font-medium text-slate-700">Sim, como renda complementar</span>
+              </label>
+              <label
+                class="flex items-center p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="p1_aulas" value="Não" class="text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-3 text-sm font-medium text-slate-700">Não dou aulas particulares no momento</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- P2 -->
+          <div class="question-block space-y-3 p-1 transition-all rounded-xl" id="block-p2">
+            <label class="block font-semibold text-slate-800 text-sm">
+              2. Que tipo de aula você dá? <span class="text-red-500">*</span>
+              <span class="block text-xs font-normal text-slate-500 mt-0.5">(Pode marcar mais de uma opção)</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2.5">
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p2_disciplinas" value="Inglês"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Inglês</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p2_disciplinas" value="Outros idiomas"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Outros idiomas</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p2_disciplinas" value="Matemática"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Matemática</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p2_disciplinas" value="Português"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Português</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p2_disciplinas" value="Física / Química"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Física / Química</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p2_disciplinas" value="Música"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Música</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p2_disciplinas" value="Programação / Tecnologia"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Programação / TI</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p2_disciplinas" value="Reforço escolar"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Reforço Escolar</span>
+              </label>
+            </div>
+            <div class="mt-2">
+              <input type="text" id="p2_outro" placeholder="Outra disciplina (opcional)"
+                class="w-full text-sm p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            </div>
+          </div>
+
+          <!-- P3 -->
+          <div class="question-block space-y-3 p-1 transition-all rounded-xl" id="block-p3">
+            <label class="block font-semibold text-slate-800 text-sm">
+              3. Quantos alunos você possui atualmente? <span class="text-red-500">*</span>
+            </label>
+            <select name="p3_qtd_alunos"
+              class="w-full text-sm p-3.5 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+              <option value="" disabled selected>Selecione uma opção...</option>
+              <option value="1–5">1 a 5 alunos</option>
+              <option value="6–10">6 a 10 alunos</option>
+              <option value="11–20">11 a 20 alunos</option>
+              <option value="21–40">21 a 40 alunos</option>
+              <option value="41–70">41 a 70 alunos</option>
+              <option value="Mais de 70">Mais de 70 alunos</option>
+            </select>
+          </div>
+
+          <!-- P4 -->
+          <div class="question-block space-y-3 p-1 transition-all rounded-xl" id="block-p4">
+            <label class="block font-semibold text-slate-800 text-sm">
+              4. Como você normalmente cobra seus alunos? <span class="text-red-500">*</span>
+              <span class="block text-xs font-normal text-slate-500 mt-0.5">(Marque todos os meios utilizados)</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2.5">
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p4_meios_cobranca" value="Pix"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Pix</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p4_meios_cobranca" value="Transferência bancária"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Transferência (TED)</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p4_meios_cobranca" value="Boleto"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Boleto</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p4_meios_cobranca" value="Cartão de Crédito/Débito"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Cartão</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p4_meios_cobranca" value="Dinheiro"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Dinheiro em espécie</span>
+              </label>
+            </div>
+            <input type="text" id="p4_outro" placeholder="Outra forma de pagamento (opcional)"
+              class="w-full text-sm p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- SEÇÃO 2 -->
+        <div id="step-2" class="step-content space-y-6">
+          <div class="border-b border-slate-100 pb-4">
+            <span
+              class="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md">Etapa
+              2 de 4</span>
+            <h2 class="text-xl md:text-2xl font-bold text-slate-900 mt-2">Controle Financeiro e Rotina</h2>
+            <p class="text-slate-500 text-sm mt-1">Queremos entender exatamente como você gerencia seus recebimentos no
+              dia a dia.</p>
+          </div>
+
+          <!-- P5 -->
+          <div class="question-block space-y-3 p-1 transition-all rounded-xl" id="block-p5">
+            <label class="block font-semibold text-slate-800 text-sm">
+              5. Como você controla quem já pagou e quem ainda está devendo? <span class="text-red-500">*</span>
+              <span class="block text-xs font-normal text-slate-500 mt-0.5">(Marque todas as opções aplicáveis)</span>
+            </label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p5_ferramentas_controle" value="Planilha (Excel / Google Sheets)"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Planilha (Excel/Sheets)</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p5_ferramentas_controle" value="Caderno / Anotações no papel"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Caderno / Anotações papel</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p5_ferramentas_controle" value="Aplicativo financeiro genérico"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">App financeiro genérico</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p5_ferramentas_controle" value="Pelo próprio app do banco"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Pelo próprio app do Banco</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p5_ferramentas_controle" value="Memória"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Apenas de cabeça (Memória)</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="p5_ferramentas_controle" value="Não tenho controle organizado"
+                  class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-2.5 text-sm text-slate-700">Não tenho controle organizado</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- P6 -->
+          <div class="question-block space-y-4 p-1 transition-all rounded-xl" id="block-p6">
+            <div>
+              <label class="block font-semibold text-slate-800 text-sm">
+                6. Quando você recebe um pagamento, como sabe a qual aluno ele pertence? <span
+                  class="text-red-500">*</span>
+              </label>
+              <textarea name="p6_identificacao_pagamento" rows="2"
+                placeholder="Ex: O aluno manda o comprovante no WhatsApp, ou vejo o nome da mãe no extrato do banco..."
+                class="w-full text-sm p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none mt-2"></textarea>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2" id="block-p6-sub">
+              <label class="block font-medium text-slate-700 text-xs uppercase tracking-wider">
+                Identificar de quem é o pagamento costuma dar algum problema/confusão? <span
+                  class="text-red-500">*</span>
+              </label>
+              <div class="grid grid-cols-5 gap-1.5 text-center">
+                <label class="cursor-pointer">
+                  <input type="radio" name="p6_frequencia_problemas" value="Nunca" class="peer sr-only">
+                  <div
+                    class="p-2 border border-slate-200 bg-white rounded-lg text-xs font-medium text-slate-600 peer-checked:bg-brand-600 peer-checked:text-white peer-checked:border-brand-600">
+                    Nunca</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="p6_frequencia_problemas" value="Raramente" class="peer sr-only">
+                  <div
+                    class="p-2 border border-slate-200 bg-white rounded-lg text-xs font-medium text-slate-600 peer-checked:bg-brand-600 peer-checked:text-white peer-checked:border-brand-600">
+                    Raramente</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="p6_frequencia_problemas" value="Às vezes" class="peer sr-only">
+                  <div
+                    class="p-2 border border-slate-200 bg-white rounded-lg text-xs font-medium text-slate-600 peer-checked:bg-brand-600 peer-checked:text-white peer-checked:border-brand-600">
+                    Às vezes</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="p6_frequencia_problemas" value="Frequentemente" class="peer sr-only">
+                  <div
+                    class="p-2 border border-slate-200 bg-white rounded-lg text-xs font-medium text-slate-600 peer-checked:bg-brand-600 peer-checked:text-white peer-checked:border-brand-600">
+                    Frequente</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="p6_frequencia_problemas" value="Sempre" class="peer sr-only">
+                  <div
+                    class="p-2 border border-slate-200 bg-white rounded-lg text-xs font-medium text-slate-600 peer-checked:bg-brand-600 peer-checked:text-white peer-checked:border-brand-600">
+                    Sempre</div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- P7 e P8 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="question-block space-y-2 p-1 transition-all rounded-xl" id="block-p7">
+              <label class="block font-semibold text-slate-800 text-sm">
+                7. Com que frequência você confere quem está atrasado? <span class="text-red-500">*</span>
+              </label>
+              <select name="p7_frequencia_checagem"
+                class="w-full text-sm p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                <option value="" disabled selected>Selecione...</option>
+                <option value="Todos os dias">Todos os dias</option>
+                <option value="Algumas vezes por semana">Algumas vezes por semana</option>
+                <option value="Uma vez por semana">Uma vez por semana</option>
+                <option value="Apenas perto do vencimento">Apenas perto do vencimento</option>
+                <option value="Só quando percebo que falta dinheiro">Só quando falta dinheiro</option>
+                <option value="Não faço esse controle">Não faço esse controle</option>
+              </select>
+            </div>
+
+            <div class="question-block space-y-2 p-1 transition-all rounded-xl" id="block-p8">
+              <label class="block font-semibold text-slate-800 text-sm">
+                8. Quanto tempo por mês você gasta cobrando / gerenciando? <span class="text-red-500">*</span>
+              </label>
+              <select name="p8_tempo_gasto_mes"
+                class="w-full text-sm p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                <option value="" disabled selected>Selecione...</option>
+                <option value="Menos de 15 minutos">Menos de 15 minutos</option>
+                <option value="15–30 minutos">15 a 30 minutos</option>
+                <option value="30–60 minutos">30 a 60 minutos</option>
+                <option value="1–2 horas">1 a 2 horas</option>
+                <option value="2–5 horas">2 a 5 horas</option>
+                <option value="Mais de 5 horas">Mais de 5 horas</option>
+                <option value="Não sei calcular">Não sei medir</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- P9 -->
+          <div class="question-block space-y-3 p-1 transition-all rounded-xl" id="block-p9">
+            <label class="block font-semibold text-slate-800 text-sm">
+              9. Quando um aluno atrasa o pagamento, o que você costuma fazer? <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-1 gap-2">
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700">
+                <input type="radio" name="p9_acao_inadimplencia" value="Envio mensagem pelo WhatsApp"
+                  class="text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-3">Envio mensagem individual pelo WhatsApp</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700">
+                <input type="radio" name="p9_acao_inadimplencia" value="Aviso pessoalmente no início/fim da aula"
+                  class="text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-3">Aviso pessoalmente antes/depois da aula</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700">
+                <input type="radio" name="p9_acao_inadimplencia" value="Espero o aluno/responsável lembrar sozinho"
+                  class="text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-3">Espero o aluno/responsável lembrar por conta própria</span>
+              </label>
+              <label
+                class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700">
+                <input type="radio" name="p9_acao_inadimplencia"
+                  value="Não costumo fazer cobrança por vergonha ou desconforto"
+                  class="text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <span class="ml-3">Não costumo cobrar por desconforto/constrangimento</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- P10 -->
+          <div class="question-block space-y-2 p-1 transition-all rounded-xl" id="block-p10">
+            <label class="block font-semibold text-slate-800 text-sm">
+              10. Na sua opinião, o que é mais chato, difícil ou desgastante em todo o processo de receber dos seus
+              alunos? <span class="text-red-500">*</span>
+            </label>
+            <textarea name="p10_pior_parte" rows="3"
+              placeholder="Descreva com suas palavras o principal transtorno ou desconforto..."
+              class="w-full text-sm p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 3 -->
+        <div id="step-3" class="step-content space-y-6">
+          <div class="border-b border-slate-100 pb-4">
+            <span
+              class="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md">Etapa
+              3 de 4</span>
+            <h2 class="text-xl md:text-2xl font-bold text-slate-900 mt-2">Prioridade de Solução</h2>
+            <div class="bg-amber-50 border border-amber-200/60 rounded-xl p-3.5 mt-3 flex items-start gap-3">
+              <i data-lucide="sparkles" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+              <p class="text-xs text-amber-900 leading-relaxed">
+                Estamos pesquisando uma ferramenta simples para facilitar a gestão financeira de professores
+                particulares. Queremos entender o que realmente ajudaria no seu dia a dia.
+              </p>
+            </div>
+          </div>
+
+          <!-- P11 -->
+          <div class="question-block space-y-3 p-1 transition-all rounded-xl" id="block-p11">
+            <label class="block font-semibold text-slate-800 text-sm">
+              11. Se pudesse escolher apenas UMA destas facilidades hoje, qual seria mais útil? <span
+                class="text-red-500">*</span>
+            </label>
+            <div class="space-y-2">
+              <label
+                class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="p11_cenario_mais_util" value="A"
+                  class="mt-1 text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <div class="ml-3">
+                  <span class="text-xs font-bold text-brand-600 block uppercase">Opção A</span>
+                  <span class="text-sm font-medium text-slate-800">Ver rapidamente numa tela quais alunos já pagaram e
+                    quais estão atrasados.</span>
+                </div>
+              </label>
+
+              <label
+                class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="p11_cenario_mais_util" value="B"
+                  class="mt-1 text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <div class="ml-3">
+                  <span class="text-xs font-bold text-brand-600 block uppercase">Opção B</span>
+                  <span class="text-sm font-medium text-slate-800">Receber lembretes/alertas automáticos indicando os
+                    alunos pendentes.</span>
+                </div>
+              </label>
+
+              <label
+                class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="p11_cenario_mais_util" value="C"
+                  class="mt-1 text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <div class="ml-3">
+                  <span class="text-xs font-bold text-brand-600 block uppercase">Opção C</span>
+                  <span class="text-sm font-medium text-slate-800">Enviar mensagens de cobrança pré-formatadas pelo
+                    WhatsApp com 1 clique.</span>
+                </div>
+              </label>
+
+              <label
+                class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="p11_cenario_mais_util" value="D"
+                  class="mt-1 text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <div class="ml-3">
+                  <span class="text-xs font-bold text-brand-600 block uppercase">Opção D</span>
+                  <span class="text-sm font-medium text-slate-800">Ter um painel completo com receitas passadas,
+                    previstas e inadimplência.</span>
+                </div>
+              </label>
+
+              <label
+                class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="p11_cenario_mais_util" value="E"
+                  class="mt-1 text-brand-600 focus:ring-brand-500 h-4 w-4">
+                <div class="ml-3">
+                  <span class="text-xs font-bold text-brand-600 block uppercase">Opção E</span>
+                  <span class="text-sm font-medium text-slate-800">Conectar com o banco para dar baixa automática sem
+                    precisar conferir extrato.</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- P12 -->
+          <div class="question-block space-y-3 p-1 transition-all rounded-xl" id="block-p12">
+            <label class="block font-semibold text-slate-800 text-sm">
+              12. Ordene as funcionalidades da MAIS importante (topo) para a MENOS importante (base):
+              <span class="block text-xs font-normal text-slate-500 mt-0.5">Use os botões ▲ ▼ para reordenar a sua
+                prioridade.</span>
+            </label>
+            <div id="ranking-container" class="space-y-2">
+              <div
+                class="ranking-item flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl"
+                data-id="Saber quem pagou e quem não pagou">
+                <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <span
+                    class="rank-number bg-slate-200 text-slate-700 font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center">1</span>
+                  Saber quem pagou e quem não pagou
+                </span>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="moveRank(this, -1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-up"
+                      class="w-4 h-4"></i></button>
+                  <button type="button" onclick="moveRank(this, 1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-down"
+                      class="w-4 h-4"></i></button>
+                </div>
+              </div>
+              <div
+                class="ranking-item flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl"
+                data-id="Lembretes / Cobranças pelo WhatsApp">
+                <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <span
+                    class="rank-number bg-slate-200 text-slate-700 font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center">2</span>
+                  Lembretes / Cobranças pelo WhatsApp
+                </span>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="moveRank(this, -1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-up"
+                      class="w-4 h-4"></i></button>
+                  <button type="button" onclick="moveRank(this, 1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-down"
+                      class="w-4 h-4"></i></button>
+                </div>
+              </div>
+              <div
+                class="ranking-item flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl"
+                data-id="Detectar automaticamente pagamentos no banco">
+                <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <span
+                    class="rank-number bg-slate-200 text-slate-700 font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center">3</span>
+                  Detectar automaticamente pagamentos no banco
+                </span>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="moveRank(this, -1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-up"
+                      class="w-4 h-4"></i></button>
+                  <button type="button" onclick="moveRank(this, 1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-down"
+                      class="w-4 h-4"></i></button>
+                </div>
+              </div>
+              <div
+                class="ranking-item flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl"
+                data-id="Painel financeiro de receitas">
+                <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <span
+                    class="rank-number bg-slate-200 text-slate-700 font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center">4</span>
+                  Painel financeiro de receitas
+                </span>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="moveRank(this, -1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-up"
+                      class="w-4 h-4"></i></button>
+                  <button type="button" onclick="moveRank(this, 1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-down"
+                      class="w-4 h-4"></i></button>
+                </div>
+              </div>
+              <div
+                class="ranking-item flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl"
+                data-id="Histórico individual por aluno">
+                <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <span
+                    class="rank-number bg-slate-200 text-slate-700 font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center">5</span>
+                  Histórico individual por aluno
+                </span>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="moveRank(this, -1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-up"
+                      class="w-4 h-4"></i></button>
+                  <button type="button" onclick="moveRank(this, 1)"
+                    class="p-1 hover:bg-slate-200 rounded text-slate-600"><i data-lucide="chevron-down"
+                      class="w-4 h-4"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- P13 -->
+          <div class="question-block space-y-2 p-1 transition-all rounded-xl" id="block-p13">
+            <label class="block font-semibold text-slate-800 text-sm">
+              13. Se você pudesse ELIMINAR para sempre apenas UMA tarefa/trabalho na cobrança dos alunos, qual seria?
+              <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="p13_trabalho_eliminar"
+              placeholder="Ex: Ter que mandar mensagem cobrando no WhatsApp..."
+              class="w-full text-sm p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- SEÇÃO 4 -->
+        <div id="step-4" class="step-content space-y-6">
+          <div class="border-b border-slate-100 pb-4">
+            <span
+              class="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md">Etapa
+              Final</span>
+            <h2 class="text-xl md:text-2xl font-bold text-slate-900 mt-2">Validação e Convite</h2>
+            <p class="text-slate-500 text-sm mt-1">Estamos nas últimas perguntas!</p>
+          </div>
+
+          <!-- P14 -->
+          <div class="question-block space-y-3 p-1 transition-all rounded-xl" id="block-p14">
+            <label class="block font-semibold text-slate-800 text-sm">
+              14. Se existisse uma solução simples que eliminasse totalmente essa dor de cabeça, qual faixa de valor
+              faria sentido para você? <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+              <label
+                class="flex flex-col items-center justify-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-center transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                <input type="radio" name="p14_faixa_preco" value="Apenas se fosse 100% Grátis" class="sr-only">
+                <span class="text-sm font-semibold text-slate-800">Grátis</span>
+                <span class="text-[10px] text-slate-500">Apenas se for 100% gratuito</span>
+              </label>
+
+              <label
+                class="flex flex-col items-center justify-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-center transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                <input type="radio" name="p14_faixa_preco" value="Até R$19/mês" class="sr-only">
+                <span class="text-sm font-semibold text-slate-800">Até R$ 19</span>
+                <span class="text-[10px] text-slate-500">por mês</span>
+              </label>
+
+              <label
+                class="flex flex-col items-center justify-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-center transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                <input type="radio" name="p14_faixa_preco" value="R$20–39/mês" class="sr-only">
+                <span class="text-sm font-semibold text-slate-800">R$ 20 a R$ 39</span>
+                <span class="text-[10px] text-slate-500">por mês</span>
+              </label>
+
+              <label
+                class="flex flex-col items-center justify-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-center transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                <input type="radio" name="p14_faixa_preco" value="R$40–69/mês" class="sr-only">
+                <span class="text-sm font-semibold text-slate-800">R$ 40 a R$ 69</span>
+                <span class="text-[10px] text-slate-500">por mês</span>
+              </label>
+
+              <label
+                class="flex flex-col items-center justify-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-center transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                <input type="radio" name="p14_faixa_preco" value="R$70–99/mês" class="sr-only">
+                <span class="text-sm font-semibold text-slate-800">R$ 70 a R$ 99</span>
+                <span class="text-[10px] text-slate-500">por mês</span>
+              </label>
+
+              <label
+                class="flex flex-col items-center justify-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-center transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                <input type="radio" name="p14_faixa_preco" value="Não pagaria nada por isso" class="sr-only">
+                <span class="text-sm font-semibold text-slate-800">Não pagaria</span>
+                <span class="text-[10px] text-slate-500">Prefiro resolver manualmente</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- P15 -->
+          <div class="question-block space-y-4 pt-2 p-1 transition-all rounded-xl" id="block-p15">
+            <label class="block font-semibold text-slate-800 text-sm">
+              15. Você teria interesse em testar uma versão inicial dessa ferramenta gratuitamente em primeira mão?
+              <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-3 gap-3">
+              <label
+                class="flex items-center justify-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 font-medium text-sm">
+                <input type="radio" name="p15_interesse_beta" value="Sim" class="sr-only"
+                  onchange="toggleContactFields(true)">
+                <span>Sim!</span>
+              </label>
+              <label
+                class="flex items-center justify-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 font-medium text-sm">
+                <input type="radio" name="p15_interesse_beta" value="Talvez" class="sr-only"
+                  onchange="toggleContactFields(true)">
+                <span>Talvez</span>
+              </label>
+              <label
+                class="flex items-center justify-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 font-medium text-sm">
+                <input type="radio" name="p15_interesse_beta" value="Não" class="sr-only"
+                  onchange="toggleContactFields(false)">
+                <span>Não</span>
+              </label>
+            </div>
+
+            <div style="display: none;" aria-hidden="true">
+              <label for="website">Forms</label>
+              <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+            </div>
+
+            <div id="contact-fields"
+              class="hidden space-y-3 bg-brand-50/50 p-4 rounded-xl border border-brand-100 mt-3">
+              <p class="text-xs text-brand-900 font-medium">Ótimo! Deixe seus dados para entrarmos em contato quando o
+                teste estiver pronto:</p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Seu Nome</label>
+                  <input type="text" id="contato_nome" placeholder="Nome completo"
+                    class="w-full text-sm p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">WhatsApp ou E-mail</label>
+                  <input type="text" id="contato_canal" placeholder="(00) 00000-0000 ou email@..."
+                    class="w-full text-sm p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTOES DE NAVEGAÇÃO -->
+        <div class="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between">
+          <button type="button" id="btn-prev" onclick="changeStep(-1)"
+            class="hidden px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-all flex items-center gap-1">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            Voltar
+          </button>
+
+          <div class="ml-auto">
+            <button type="button" id="btn-next" onclick="changeStep(1)"
+              class="bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-all shadow-md shadow-brand-500/20 flex items-center gap-2">
+              <span>Avançar</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+
+            <button type="button" id="btn-submit" onclick="submitForm()"
+              class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-7 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-500/20 flex items-center gap-2">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              <span>Enviar Respostas</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+
+      <!-- TELA DE AGRADECIMENTO -->
+      <div id="thankyou-screen" class="hidden text-center py-10 space-y-5">
+        <div
+          class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+          <i data-lucide="check" class="w-8 h-8"></i>
+        </div>
+        <div class="space-y-2">
+          <h2 class="text-2xl font-bold text-slate-900">Resposta Registrada!</h2>
+          <p class="text-slate-600 text-sm max-w-md mx-auto leading-relaxed">
+            Muito obrigado por dedicar alguns minutos do seu tempo. Suas respostas são extremamente valiosas para nos
+            ajudar a entender os desafios de quem dá aulas particulares.
+          </p>
+        </div>
+        <div class="pt-4 border-t border-slate-100">
+          <p class="text-xs text-slate-400">Você já pode fechar esta aba.</p>
+        </div>
+      </div>
+
+      <!-- TELA DE DESQUALIFICAÇÃO -->
+      <div id="disqualified-screen" class="hidden text-center py-10 space-y-4">
+        <div class="w-12 h-12 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center mx-auto">
+          <i data-lucide="user-x" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-xl font-bold text-slate-800">Obrigado pelo interesse!</h2>
+        <p class="text-slate-600 text-sm max-w-sm mx-auto">
+          No momento esta pesquisa é voltada exclusivamente para quem leciona aulas particulares ativamente. Agradecemos
+          sua atenção!
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- RODAPÉ -->
+  <footer class="text-center py-6 text-xs text-slate-400 border-t border-slate-200 bg-white">
+    <p>Pesquisa de Descoberta de Produto &bull; Dados confidenciais e protegidos</p>
+  </footer>
+
+  <!-- LÓGICA JAVASCRIPT -->
+  <script>
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      attachInputListeners();
+    });
+
+    // Remove destaque de erro ao responder a pergunta
+    function attachInputListeners() {
+      document.querySelectorAll('input, select, textarea').forEach(input => {
+        input.addEventListener('change', () => {
+          const block = input.closest('.question-block');
+          if (block) block.classList.remove('field-error');
+          hideError();
+        });
+        if (input.tagName === 'TEXTAREA' || input.type === 'text') {
+          input.addEventListener('input', () => {
+            const block = input.closest('.question-block');
+            if (block && input.value.trim().length > 0) {
+              block.classList.remove('field-error');
+              hideError();
+            }
+          });
+        }
+      });
+    }
+
+    // Navegação entre etapas
+    function changeStep(delta) {
+      if (delta > 0) {
+        const firstUnansweredBlock = getFirstUnansweredBlock();
+        if (firstUnansweredBlock) {
+          showError("Por favor, responda a pergunta destacada antes de prosseguir.");
+          highlightAndScrollToBlock(firstUnansweredBlock);
+          return;
+        }
+      }
+
+      hideError();
+
+      if (currentStep === 1 && delta > 0) {
+        const p1Val = document.querySelector('input[name="p1_aulas"]:checked')?.value;
+        if (p1Val === 'Não') {
+          showDisqualifiedScreen();
+          return;
+        }
+      }
+
+      const newStep = currentStep + delta;
+
+      if (newStep >= 1 && newStep <= totalSteps) {
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        currentStep = newStep;
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        updateUI();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // Localiza e retorna o primeiro elemento não respondido na etapa atual
+    function getFirstUnansweredBlock() {
+      // Limpa erros anteriores
+      document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+
+      if (currentStep === 1) {
+        if (!document.querySelector('input[name="p1_aulas"]:checked')) {
+          return document.getElementById('block-p1');
+        }
+        const p1Val = document.querySelector('input[name="p1_aulas"]:checked').value;
+        if (p1Val !== 'Não') {
+          const p2Checked = document.querySelectorAll('input[name="p2_disciplinas"]:checked').length > 0;
+          const p2Outro = document.getElementById('p2_outro').value.trim().length > 0;
+          if (!p2Checked && !p2Outro) return document.getElementById('block-p2');
+
+          if (!document.querySelector('select[name="p3_qtd_alunos"]').value) {
+            return document.getElementById('block-p3');
+          }
+
+          const p4Checked = document.querySelectorAll('input[name="p4_meios_cobranca"]:checked').length > 0;
+          const p4Outro = document.getElementById('p4_outro').value.trim().length > 0;
+          if (!p4Checked && !p4Outro) return document.getElementById('block-p4');
+        }
+      }
+      else if (currentStep === 2) {
+        if (document.querySelectorAll('input[name="p5_ferramentas_controle"]:checked').length === 0) {
+          return document.getElementById('block-p5');
+        }
+        if (!document.querySelector('textarea[name="p6_identificacao_pagamento"]').value.trim()) {
+          return document.getElementById('block-p6');
+        }
+        if (!document.querySelector('input[name="p6_frequencia_problemas"]:checked')) {
+          return document.getElementById('block-p6-sub');
+        }
+        if (!document.querySelector('select[name="p7_frequencia_checagem"]').value) {
+          return document.getElementById('block-p7');
+        }
+        if (!document.querySelector('select[name="p8_tempo_gasto_mes"]').value) {
+          return document.getElementById('block-p8');
+        }
+        if (!document.querySelector('input[name="p9_acao_inadimplencia"]:checked')) {
+          return document.getElementById('block-p9');
+        }
+        if (!document.querySelector('textarea[name="p10_pior_parte"]').value.trim()) {
+          return document.getElementById('block-p10');
+        }
+      }
+      else if (currentStep === 3) {
+        if (!document.querySelector('input[name="p11_cenario_mais_util"]:checked')) {
+          return document.getElementById('block-p11');
+        }
+        if (!document.querySelector('input[name="p13_trabalho_eliminar"]').value.trim()) {
+          return document.getElementById('block-p13');
+        }
+      }
+      else if (currentStep === 4) {
+        if (!document.querySelector('input[name="p14_faixa_preco"]:checked')) {
+          return document.getElementById('block-p14');
+        }
+        if (!document.querySelector('input[name="p15_interesse_beta"]:checked')) {
+          return document.getElementById('block-p15');
+        }
+      }
+
+      return null;
+    }
+
+    // Aplica destaque e Rola Smoothmente até o elemento pendente
+    function highlightAndScrollToBlock(element) {
+      if (!element) return;
+
+      element.classList.add('field-error');
+
+      // Rola a tela considerando a barra do topo (offset de 100px)
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - 100;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+
+    function updateUI() {
+      const pct = (currentStep / totalSteps) * 100;
+      document.getElementById('progress-bar').style.width = `${pct}%`;
+
+      const btnPrev = document.getElementById('btn-prev');
+      if (currentStep > 1) {
+        btnPrev.classList.remove('hidden');
+      } else {
+        btnPrev.classList.add('hidden');
+      }
+
+      const btnNext = document.getElementById('btn-next');
+      const btnSubmit = document.getElementById('btn-submit');
+
+      if (currentStep === totalSteps) {
+        btnNext.classList.add('hidden');
+        btnSubmit.classList.remove('hidden');
+      } else {
+        btnNext.classList.remove('hidden');
+        btnSubmit.classList.add('hidden');
+      }
+    }
+
+    function toggleContactFields(show) {
+      const el = document.getElementById('contact-fields');
+      if (show) {
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
+    }
+
+    function moveRank(button, delta) {
+      const item = button.closest('.ranking-item');
+      const container = document.getElementById('ranking-container');
+      const items = Array.from(container.children);
+      const index = items.indexOf(item);
+
+      if (delta === -1 && index > 0) {
+        container.insertBefore(item, items[index - 1]);
+      } else if (delta === 1 && index < items.length - 1) {
+        container.insertBefore(items[index + 1], item);
+      }
+
+      Array.from(container.children).forEach((el, idx) => {
+        el.querySelector('.rank-number').textContent = idx + 1;
+      });
+    }
+
+    function showError(msg) {
+      const errBox = document.getElementById('error-message');
+      document.getElementById('error-text').innerText = msg;
+      errBox.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('error-message').classList.add('hidden');
+    }
+
+    function showDisqualifiedScreen() {
+      document.getElementById('discovery-form').classList.add('hidden');
+      document.getElementById('disqualified-screen').classList.remove('hidden');
+      document.getElementById('progress-bar').style.width = '100%';
+    }
+
+    async function submitForm() {
+      const hpValue = document.getElementById('website')?.value;
+      if (hpValue) {
+        showThankYouScreen();
+        return;
+      }
+
+      // 2. Validação dos blocos obrigatórios
+      const firstUnansweredBlock = getFirstUnansweredBlock();
+      if (firstUnansweredBlock) {
+        showError("Por favor, responda a pergunta destacada antes de enviar.");
+        highlightAndScrollToBlock(firstUnansweredBlock);
+        return;
+      }
+
+      hideError();
+
+
+      // Substitua a construção do payload por esta versão plana:
+      const rankingItems = Array.from(document.querySelectorAll('#ranking-container .ranking-item'))
+        .map(el => el.getAttribute('data-id'));
+
+      const disciplinasChecked = Array.from(document.querySelectorAll('input[name="p2_disciplinas"]:checked')).map(c => c.value);
+
+      const meiosChecked = Array.from(document.querySelectorAll('input[name="p4_meios_cobranca"]:checked')).map(c => c.value);
+
+      const ferramentasChecked = Array.from(document.querySelectorAll('input[name="p5_ferramentas_controle"]:checked')).map(c => c.value);
+
+      const payload = {
+        p1_aulas: document.querySelector('input[name="p1_aulas"]:checked')?.value || '',
+        p2_disciplinas: disciplinasChecked,
+        p2_outro: document.getElementById('p2_outro')?.value.trim() || '',
+        p3_qtd_alunos: document.querySelector('select[name="p3_qtd_alunos"]')?.value || '',
+        p4_meios_cobranca: meiosChecked,
+        p4_outro: document.getElementById('p4_outro')?.value.trim() || '',
+        p5_ferramentas_controle: ferramentasChecked,
+        p6_identificacao_pagamento: document.querySelector('textarea[name="p6_identificacao_pagamento"]')?.value || '',
+        p6_frequencia_problemas: document.querySelector('input[name="p6_frequencia_problemas"]:checked')?.value || '',
+        p7_frequencia_checagem: document.querySelector('select[name="p7_frequencia_checagem"]')?.value || '',
+        p8_tempo_gasto_mes: document.querySelector('select[name="p8_tempo_gasto_mes"]')?.value || '',
+        p9_acao_inadimplencia: document.querySelector('input[name="p9_acao_inadimplencia"]:checked')?.value || '',
+        p10_pior_parte: document.querySelector('textarea[name="p10_pior_parte"]')?.value || '',
+        p11_cenario_mais_util: document.querySelector('input[name="p11_cenario_mais_util"]:checked')?.value || '',
+        p12_ranking: rankingItems,
+        p13_trabalho_eliminar: document.querySelector('input[name="p13_trabalho_eliminar"]')?.value || '',
+        p14_faixa_preco: document.querySelector('input[name="p14_faixa_preco"]:checked')?.value || '',
+        p15_interesse_beta: document.querySelector('input[name="p15_interesse_beta"]:checked')?.value || '',
+        contato_nome: document.getElementById('contato_nome')?.value || '',
+        contato_canal: document.getElementById('contato_canal')?.value || '',
+        website: document.getElementById('website')?.value || ''
+      };
+
+      const btnSubmit = document.getElementById('btn-submit');
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Enviando...</span>`;
+      lucide.createIcons();
+
+      try {
+        await fetch(CONFIG.API_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        showThankYouScreen();
+      } catch (err) {
+        console.error('Erro no envio:', err);
+        showThankYouScreen();
+      }
+    }
+
+    function showThankYouScreen() {
+      document.getElementById('discovery-form').classList.add('hidden');
+      document.getElementById('thankyou-screen').classList.remove('hidden');
+      document.getElementById('progress-bar').style.width = '100%';
+    }
+  </script>
+</body>
+
+</html>
